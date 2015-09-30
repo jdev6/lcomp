@@ -13,6 +13,7 @@ doc = "Shows documentation of a function/statement.\nUsage: 'doc <query>'",
 set = "Sets a variable.\nUsage: 'set <name> = <value>'",
 lin = "Gets user input, has to be used with 'set'.\nUsage: 'set <name> = %lin'",
 execute = "Executes a system command, which could be potentially dangerous, use carefully!\nUsage: 'execute <command>'",
+load = "Loads another lc script.\nUsage: 'load <filename>'",
 list = function()
 		for content,ln in pairs(compiler.docs) do
 			print(content)
@@ -37,16 +38,23 @@ function compiler.lout(parts)
 	end
 end
 
+function compiler.load(f)
+	if f == nil then return compiler.error("Filename expected after expression 'load'") end
+	file = io.open(f, "r")
+	if file then compiler.readf(file)
+	else return compiler.error("File can't be found/executed.") end
+end
+
 function compiler.sleep(sec)
 	--Checks if you inputed a valid number
-	if tonumber(sec) == nil then return compiler.error("Incorrect usage, number expected after expression 'sleep'") end
+	if tonumber(sec) == nil then return compiler.error("Number expected after expression 'sleep'") end
 	local ntime = os.time() + sec
 	repeat until os.time() > ntime
 end
 
 function compiler.set(name, eq, value)
 	if name == nil or eq == nil or value == nil then --Checks if you inputed everything correctly
-		return compiler.error("Incorrect usage, name and value expected after expression 'set'")
+		return compiler.error("Name and value expected after expression 'set'")
 
 	elseif eq ~= "=" then
 		return compiler.error("Unexpected symbol '"..eq.."' near '"..name.."'")
@@ -59,7 +67,7 @@ end
 
 function compiler.doc(query)
 	--Checks if you entered a query
-	if query == nil then return compiler.error("Incorrect usage, query expected after expresion 'doc'")
+	if query == nil then return compiler.error("Query expected after expresion 'doc'")
 	elseif compiler.docs[query] == nil then --Checks if doc entry exists
 		return compiler.error("No entry for "..query)
 	end
@@ -112,6 +120,9 @@ function compiler.proccess(string) --Main function, executes strings
 			end
 		end
 		os.execute(exe)
+
+	elseif command[1] == "load" then
+		compiler.load(command[2])
 
 	elseif command[1] == "set" then
 		local val = ""
