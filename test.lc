@@ -1,0 +1,6 @@
+lout Enter your name:
+set name = %lin
+lout Welcome $name !
+sleep 0.5
+lout Take a tour in this language by searching in the docs. Start with 'doc list'
+lout Have fun!

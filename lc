@@ -1,0 +1,5 @@
+#!/bin/env lua
+
+require "src.main"
+
+main.start(arg)
