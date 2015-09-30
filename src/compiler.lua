@@ -14,6 +14,7 @@ set = "Sets a variable.\nUsage: 'set <name> = <value>'",
 lin = "Gets user input, has to be used with 'set'.\nUsage: 'set <name> = %lin'",
 execute = "Executes a system command, which could be potentially dangerous, use carefully!\nUsage: 'execute <command>'",
 load = "Loads another lc script.\nUsage: 'load <filename>'",
+variables = "Once you have defined them with set (see 'doc set') you can call them with a dollar sign ($)",
 list = function()
 		for content,ln in pairs(compiler.docs) do
 			print(content)
