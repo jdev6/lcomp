@@ -10,7 +10,7 @@ function main.start(opt)
 	else
 		print("jdev6 2015, lcomp 1.0")
 		while true do
-			inp = readline.readline("::")
+			inp = readline.readline(compiler.prompt)
 			compiler.proccess(inp)
 		end
 	end
