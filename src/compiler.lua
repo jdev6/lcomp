@@ -176,7 +176,7 @@ function compiler.proccess(string) --Main function, executes strings
     end
   end
   
-	--Commands
+	--Commandss
 	if command[1] == "exit" then
 		os.exit()
 
