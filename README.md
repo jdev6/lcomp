@@ -18,9 +18,9 @@ comments: Ignored by the compiler, only work at the start of a line. Usage: '_[c
 
 doc: Shows documentation of a function/statement. Usage: 'doc [query]'
 
-set: Sets a variable. Usage: 'set <name> = [value]'
+set: Sets a variable. Usage: 'set [name] = [value]'
 
-lin: Gets user input, has to be used with 'set'. Usage: 'set [name] = %lin'
+lin: Gets user input. Usage: 'lin [name]'
 
 execute: Executes a system command, which could be potentially dangerous, use carefully! Usage: 'execute [command]
 
@@ -31,3 +31,25 @@ variables: Once you have defined them with set (see 'doc set') you can call them
     set foo = bar
     lout Foo value is $foo
     --Output: Foo value is bar
+
+math: Perform an operation with '<>' Usage example:
+
+    lout 5+5 is <>5+5<> ! 
+    _Output: '5+5 is 10 !'
+    set foo = <>5/2<>
+    lout result is <> $foo + 3<>!
+    _Output: 'result is 5.5 !'
+    
+    _Note: variables have to be surrounded by spaces to work
+
+
+if/else: Compare expressions (only '=='). Usage example:
+
+    set foo = bar
+    if $foo == bar
+      lout yes
+    else
+      lout no
+    end
+      
+    _Output: yes

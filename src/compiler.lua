@@ -1,6 +1,7 @@
 require "os"
+local readline = require "readline"
 
-compiler = {inFile = false} --The compiler object
+compiler = {inFile = false, mode = "normal", ifOrElse = "none", prompt = "::"} --The compiler object
 
 compiler.variables = {} --Variables are stored here
 
@@ -11,15 +12,23 @@ sleep = "Waits until the specified time has passed. It supports floats.\nUsage: 
 comments = "Ignored by the compiler, only work at the start of a line.\nUsage: '_<comment>'",
 doc = "Shows documentation of a function/statement.\nUsage: 'doc <query>'",
 set = "Sets a variable.\nUsage: 'set <name> = <value>'",
-lin = "Gets user input, has to be used with 'set'.\nUsage: 'set <name> = %lin'",
+lin = "Gets user input.\nUsage: 'lin <varname>'",
 execute = "Executes a system command, which could be potentially dangerous, use carefully!\nUsage: 'execute <command>'",
 load = "Loads another lc script.\nUsage: 'load <filename>'",
-variables = "Once you have defined them with set (see 'doc set') you can call them with a dollar sign ($)",
+variables = "Once you have defined them with set (see 'doc set') you can call them with a dollar sign ($).\nUsage example:\n'set foo = bar', 'lout $foo'",
+math = "Perform an operation with <>.\nUsage example:\n'lout 5+5 is <>5+5<> !', 'set foo = <>5/2*3-6<>'",
+if_else = [[Compare expressions.
+Usage example:
+  set foo = bar
+  if $foo == bar
+    lout yes
+  else
+    lout no
+  end
+_Output: yes]],
 list = function()
-		for content,ln in pairs(compiler.docs) do
-			print(content)
-		end
-	end
+  for content,ln in pairs(compiler.docs) do print(content) end
+end
 }
 
 function compiler.error(msg)
@@ -29,21 +38,26 @@ function compiler.error(msg)
 end
 
 function compiler.lout(parts)
-	if parts[2] ~= nil then
-		for i=2, #parts, 1 do
-			io.write(parts[i].." ")
-		end
-		print()
-	else
-		return compiler.error("Expected string after expression 'lout'")
+  if parts[2] == nil then parts[2] = "" end
+	for i=2, #parts, 1 do
+    io.write(parts[i].." ")
 	end
+	print()
+end
+
+function compiler.lin(v)
+  if v == nil then readline.readline() else
+  compiler.variables[v] = readline.readline() end
 end
 
 function compiler.load(f)
 	if f == nil then return compiler.error("Filename expected after expression 'load'") end
 	file = io.open(f, "r")
-	if file then compiler.readf(file)
+	if file then
+		compiler.readf(file)
+		if not compiler.inFile then local tmpinf = false else local tmpinf = true end
 	else return compiler.error("File can't be found/executed.") end
+	compiler.inFile = tmpinf
 end
 
 function compiler.sleep(sec)
@@ -59,13 +73,30 @@ function compiler.set(name, eq, value)
 
 	elseif eq ~= "=" then
 		return compiler.error("Unexpected symbol '"..eq.."' near '"..name.."'")
-	end
-
-	if value == "%lin" then compiler.variables[name] = io.read() --To get user input
-	else compiler.variables[name] = value
+  else
+    compiler.variables[name] = value
 	end
 end
 
+function compiler.ifelse(words)
+  compiler.mode = "ifelse"
+  compiler.prompt = ".."
+  words[1] = nil
+  local cond = split(join(words), " == ")
+  if cond[2] ~= nil then
+    if cond[1] == cond[2] then --equal
+      compiler.ifOrElse = "if"
+    else
+      compiler.ifOrElse = "else"
+    end
+    
+  else
+    compiler.prompt = "::"
+    compiler.mode = "normal"
+    return compiler.error("Malformed condition after expression 'if'")
+  end
+end
+  
 function compiler.doc(query)
 	--Checks if you entered a query
 	if query == nil then return compiler.error("Query expected after expresion 'doc'")
@@ -77,6 +108,15 @@ function compiler.doc(query)
 	else print(compiler.docs[query]) --To print normal entries
 	end
 
+end
+
+function join(t)
+	x = ""
+	for key, value in pairs(t) do
+		if x == "" then x = value
+		else x = x.." "..value end
+	end
+	return x
 end
 
 function split(inputstr, sep) --Function that splits a string by the separator you entered. Default is space
@@ -91,8 +131,10 @@ function split(inputstr, sep) --Function that splits a string by the separator y
         return t
 end
 
+
+
 function compiler.proccess(string) --Main function, executes strings
-	command = split(string, nil) --Splits into words
+  command = split(string) --Splits into words
 
 	for i=1, #command, 1 do --Very important: Replaces every word starting with '$' to its variable value
 		if command[i]:sub(1,1) == "$" then
@@ -100,13 +142,53 @@ function compiler.proccess(string) --Main function, executes strings
 		end
 	end
 
+	string = join(command) --Converts again into string
+
+	halfs = split(string, "<>") --Splits by '<>' to make operations separately
+	if halfs[2] ~= nil then
+		opr = loadstring("opr = "..halfs[2])
+		opr()
+		halfs[2] = opr
+		string = join(halfs) --Transforms in string again
+	end
+	command = split(string) --Splits into words again
+  
+  if command[1] == "end" then --Exit if/else clauses
+      compiler.mode = "normal"
+      compiler.prompt = "::"
+      compiler.didIf = false
+      return 0
+  end
+  
+  if compiler.mode == "ifelse" then
+    --print("--"..compiler.ifOrElse.."--") --For debugging
+    if command[1] == "else" then
+      compiler.didIf = true
+      
+    elseif compiler.didIf and compiler.ifOrElse == "if" then
+      return 0
+    
+    elseif not compiler.didIf and compiler.ifOrElse == "else" then
+      return 0
+      
+    elseif compiler.didIf and compiler.ifOrElse == "else" then
+      _a = nil
+    end
+  end
+  
 	--Commands
 	if command[1] == "exit" then
 		os.exit()
 
 	elseif command[1] == "lout" then
 		compiler.lout(command)
+    
+  elseif command[1] == "lin" then
+    compiler.lin(command[2])
 
+  elseif command[1] == "if" then
+		compiler.ifelse(command)
+    
 	elseif command[1] == "sleep" then
 		compiler.sleep(command[2])
 
@@ -114,12 +196,9 @@ function compiler.proccess(string) --Main function, executes strings
 		compiler.doc(command[2])
 
 	elseif command[1] == "execute" then
-		local exe = ""
-		for i=2, #command, 1 do
-			if exe == "" then exe = command[i]
-			else exe = exe.." "..command[i]
-			end
-		end
+		local _command = command
+		_command[1] = nil
+		exe = join(_command)
 		os.execute(exe)
 
 	elseif command[1] == "load" then
@@ -133,12 +212,15 @@ function compiler.proccess(string) --Main function, executes strings
 			end
 		end
 		compiler.set(command[2], command[3], val)
+  
+  elseif command[1] == "else" then return 0
+  
+	elseif command[1] == nil then return 0
 
 	elseif command[1]:sub(1,1) == "_" then
 		return 0
 
 	else --If the command isn't recognised
-		if command[1] == nil then return 0 end
 		return compiler.error("'"..command[1].. "' is not recognized")
 	end
 	return 0

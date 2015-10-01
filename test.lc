@@ -1,6 +1,5 @@
-lout Enter your name:
-set name = %lin
-lout Welcome $name !
-sleep 0.5
-lout Take a tour in this language by searching in the docs. Start with 'doc list'
-lout Have fun!
+execute printf "Enter your name: "
+lin name
+lout Hello and welcome $name to this lc tutorial!
+sleep 0.1
+lout Start with 'doc list', it will print a list of all the documentation, and the you'll be able to see each one with 'doc [query]'. Have fun!
