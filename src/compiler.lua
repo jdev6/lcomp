@@ -4,6 +4,7 @@ local readline = require "readline"
 compiler = {inFile = false, mode = "normal", ifOrElse = "none", prompt = "::"} --The compiler object
 
 compiler.variables = {} --Variables are stored here
+compiler.functions = {} --Functions are stored here
 
 compiler.docs = { --Doc entries are stored here
 lout = "Prints to stdout.\nUsage: 'lout <string>'",
@@ -15,9 +16,29 @@ set = "Sets a variable.\nUsage: 'set <name> = <value>'",
 lin = "Gets user input.\nUsage: 'lin <varname>'",
 execute = "Executes a system command, which could be potentially dangerous, use carefully!\nUsage: 'execute <command>'",
 load = "Loads another lc script.\nUsage: 'load <filename>'",
+functions = [[Create reusable functions.
+Usage:
+  _To create them
+  func <name>
+    _Code
+  end
+  _To call them
+  %<name>
+Usage example:
+  func foo
+    lout bar
+  end
+  %foo
+  _Output = 'bar']],
 variables = "Once you have defined them with set (see 'doc set') you can call them with a dollar sign ($).\nUsage example:\n'set foo = bar', 'lout $foo'",
 math = "Perform an operation with <>.\nUsage example:\n'lout 5+5 is <>5+5<> !', 'set foo = <>5/2*3-6<>'",
 if_else = [[Compare expressions.
+Usage:
+  if condition
+    _Code
+  else
+    _Code
+  end
 Usage example:
   set foo = bar
   if $foo == bar
@@ -56,7 +77,7 @@ function compiler.load(f)
 	if file then
 		compiler.readf(file)
 		if not compiler.inFile then local tmpinf = false else local tmpinf = true end
-	else return compiler.error("File can't be found/executed.") end
+	else return compiler.error("File "..f.." not found.") end
 	compiler.inFile = tmpinf
 end
 
@@ -82,8 +103,8 @@ function compiler.ifelse(words)
   compiler.mode = "ifelse"
   compiler.prompt = ".."
   words[1] = nil
-  local cond = split(join(words), " == ")
-  if cond[2] ~= nil then
+  if split(join(words), " == ") ~= nil then
+    local cond = split(join(words), " == ")
     if cond[1] == cond[2] then --equal
       compiler.ifOrElse = "if"
     else
@@ -97,6 +118,30 @@ function compiler.ifelse(words)
   end
 end
   
+function compiler.createfunc(x, m)
+  if x == nil then
+    return compiler.error("Expected function name")
+  end
+  if m == "create" then
+    compiler.prompt = ".."
+    compiler.mode = "function"
+    compiler.funcName = x
+  
+elseif m == "add" then
+    if compiler.functions[compiler.funcName] == nil then compiler.functions[compiler.funcName] = {} end
+    table.insert(compiler.functions[compiler.funcName], x) 
+  end
+end
+
+function compiler.dofunc(f)
+  if compiler.functions[f] == nil then
+    return compiler.error("That function doesn't exist")
+  end
+  for l, c in pairs(compiler.functions[f]) do
+    compiler.proccess(c)
+  end
+  return 0
+end
 function compiler.doc(query)
 	--Checks if you entered a query
 	if query == nil then return compiler.error("Query expected after expresion 'doc'")
@@ -119,19 +164,31 @@ function join(t)
 	return x
 end
 
-function split(inputstr, sep) --Function that splits a string by the separator you entered. Default is space
-        if sep == nil then
-                sep = "%s"
-        end
-        local t={} ; i=1
-        for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-                t[i] = str
-                i = i + 1
-        end
-        return t
+function split(ins, sSeparator, nMax, bRegexp) --Function that splits a string by the separator you entered. Default is space
+if sSeparator == nil then sSeparator = " " end
+assert(sSeparator ~= '')
+	assert(nMax == nil or nMax >= 1)
+
+	local aRecord = {}
+
+	if ins:len() > 0 then
+		local bPlain = not bRegexp
+		nMax = nMax or -1
+
+		local nField, nStart = 1, 1
+		local nFirst,nLast = ins:find(sSeparator, nStart, bPlain)
+		while nFirst and nMax ~= 0 do
+			aRecord[nField] = ins:sub(nStart, nFirst-1)
+			nField = nField+1
+			nStart = nLast+1
+			nFirst,nLast = ins:find(sSeparator, nStart, bPlain)
+			nMax = nMax-1
+		end
+		aRecord[nField] = ins:sub(nStart)
+	end
+
+	return aRecord
 end
-
-
 
 function compiler.proccess(string) --Main function, executes strings
   command = split(string) --Splits into words
@@ -153,15 +210,20 @@ function compiler.proccess(string) --Main function, executes strings
 	end
 	command = split(string) --Splits into words again
   
+  if command[1]:sub(1,1) == " " or command[1]:sub(1,1) == ("	") then
+    command[1] = command[1]:sub(2, #command[1])
+  end
+  
   if command[1] == "end" then --Exit if/else clauses
       compiler.mode = "normal"
       compiler.prompt = "::"
       compiler.didIf = false
+      compiler.funcName = nil
       return 0
   end
   
   if compiler.mode == "ifelse" then
-    --print("--"..compiler.ifOrElse.."--") --For debugging
+    print("--"..compiler.ifOrElse.."--") --For debugging
     if command[1] == "else" then
       compiler.didIf = true
       
@@ -174,9 +236,13 @@ function compiler.proccess(string) --Main function, executes strings
     elseif compiler.didIf and compiler.ifOrElse == "else" then
       _a = nil
     end
-  end
   
-	--Commandss
+  elseif compiler.mode == "function" then
+    compiler.createfunc(join(command), "add")
+    return 0
+  end
+
+  --Commands
 	if command[1] == "exit" then
 		os.exit()
 
@@ -212,10 +278,17 @@ function compiler.proccess(string) --Main function, executes strings
 			end
 		end
 		compiler.set(command[2], command[3], val)
+
+  elseif command[1] == "func" then
+    compiler.createfunc(command[2], "create")
   
   elseif command[1] == "else" then return 0
   
 	elseif command[1] == nil then return 0
+  
+  elseif command[1]:sub(1,1) == "%" then
+		compiler.dofunc(command[1]:sub(2, #command[1]))
+    return 0
 
 	elseif command[1]:sub(1,1) == "_" then
 		return 0

@@ -5,7 +5,7 @@ Dynamic language made in lua (not actually a language, but yeah)
 Printing to screen, sleep function, comments, built-in doc, variables (only strings), user input, load other scripts and execute external commands
 
 #What I'm planning to implement
-More data types (lists, numbers, etc), operations, functions with arguments, command-line args
+Lists, function args, command-line args
 
 #Docs
 lout: Prints to stdout. Usage: 'lout [string]'
@@ -20,7 +20,7 @@ doc: Shows documentation of a function/statement. Usage: 'doc [query]'
 
 set: Sets a variable. Usage: 'set [name] = [value]'
 
-lin: Gets user input. Usage: 'lin [name]'
+lin: Gets user input. Usage: 'lin [varname]'
 
 execute: Executes a system command, which could be potentially dangerous, use carefully! Usage: 'execute [command]
 
@@ -42,14 +42,33 @@ math: Perform an operation with '<>' Usage example:
     
     _Note: variables have to be surrounded by spaces to work
 
+if/else: Compare expressions (only '==').
+Usage:
+  if condition
+    _Code
+  else
+    _Code
+  end
+Usage example:
+  set foo = bar
+  if $foo == bar
+    lout yes
+  else
+    lout no
+  end
+  _Output: yes
 
-if/else: Compare expressions (only '=='). Usage example:
-
-    set foo = bar
-    if $foo == bar
-      lout yes
-    else
-      lout no
-    end
-      
-    _Output: yes
+functions: Create reusable functions.
+Usage:
+  _To create them
+  func <name>
+    _Code
+  end
+  _To call them
+  %<name>
+Usage example:
+  func foo
+    lout bar
+  end
+  %foo
+  _Output = 'bar'

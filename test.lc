@@ -1,5 +1,8 @@
-execute printf "Enter your name: "
-lin name
-lout Hello and welcome $name to this lc tutorial!
-sleep 0.1
-lout Start with 'doc list', it will print a list of all the documentation, and the you'll be able to see each one with 'doc [query]'. Have fun!
+execute printf "Enter pass: "
+lin pass
+if $pass == potato
+	lout nice
+else
+	lout $pass
+	lout bad
+end
