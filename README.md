@@ -44,31 +44,35 @@ math: Perform an operation with '<>' Usage example:
 
 if/else: Compare expressions (only '==').
 Usage:
-  if condition
-    _Code
-  else
-    _Code
-  end
+
+      if condition
+        _Code
+      else
+        _Code
+      end
 Usage example:
-  set foo = bar
-  if $foo == bar
-    lout yes
-  else
-    lout no
-  end
-  _Output: yes
+
+      set foo = bar
+      if $foo == bar
+        lout yes
+      else
+        lout no
+      end
+      _Output: yes
 
 functions: Create reusable functions.
 Usage:
-  _To create them
-  func <name>
-    _Code
-  end
-  _To call them
-  %<name>
+
+      _To create them
+      func <name>
+        _Code
+      end
+      _To call them
+      %<name>
 Usage example:
-  func foo
-    lout bar
-  end
-  %foo
-  _Output = 'bar'
+
+      func foo
+        lout bar
+      end
+      %foo
+      _Output = 'bar'
