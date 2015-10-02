@@ -2,7 +2,7 @@
 Dynamic language made in lua (not actually a language, but yeah)
 
 #Implemented so far
-Printing to screen, sleep function, comments, built-in doc, variables (only strings), user input, load other scripts and execute external commands
+Printing to screen, sleep function, comments, built-in doc, variables (only strings), user input, load other scripts, functions, if-else and execute external commands
 
 #What I'm planning to implement
 Lists, function args, command-line args
