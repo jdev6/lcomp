@@ -110,14 +110,14 @@ function compiler.ifelse(words)
     else
       compiler.ifOrElse = "else"
     end
-    
+
   else
     compiler.prompt = "::"
     compiler.mode = "normal"
     return compiler.error("Malformed condition after expression 'if'")
   end
 end
-  
+
 function compiler.createfunc(x, m)
   if x == nil then
     return compiler.error("Expected function name")
@@ -194,7 +194,7 @@ function compiler.proccess(string) --Main function, executes strings
   command = split(string) --Splits into words
 
 	for i=1, #command, 1 do --Very important: Replaces every word starting with '$' to its variable value
-		if command[i]:sub(1,1) == "$" then
+		if command[i]:sub(1,1) == "$" and compiler.mode ~= "function" then
 			command[i] = compiler.variables[command[i]:sub(2, #command[i])]
 		end
 	end
@@ -210,7 +210,8 @@ function compiler.proccess(string) --Main function, executes strings
 	end
 	command = split(string) --Splits into words again
   
-  if command[1]:sub(1,1) == " " or command[1]:sub(1,1) == ("	") then
+  if command[1] == nil then return 1
+  elseif command[1]:sub(1,1) == " " or command[1]:sub(1,1) == ("	") then
     command[1] = command[1]:sub(2, #command[1])
   end
   
@@ -223,7 +224,7 @@ function compiler.proccess(string) --Main function, executes strings
   end
   
   if compiler.mode == "ifelse" then
-    print("--"..compiler.ifOrElse.."--") --For debugging
+   -- print("--"..compiler.ifOrElse.."--") --For debugging
     if command[1] == "else" then
       compiler.didIf = true
       
